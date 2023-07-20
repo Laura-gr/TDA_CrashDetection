@@ -16,13 +16,72 @@ from pandas.tseries.offsets import BDay
 from sklearn.preprocessing import StandardScaler, MinMaxScaler
 from scipy.signal import periodogram
 
-# Preprocessing data
 
-# Data cleaning from yfinance
-# Computation of log retrun
-# Normalization of log return (MinMax or Standard? Or give the choice?)
+# Assume we have already downloaded our data from yfinance and selected the close prices. The index is already a DateTime object, frequence = Buisness days
 
-# End preprossessing
+def scaling(dataset, scaler = StandardScaler()):
+
+    """
+    Compute the log return and then scale it.
+
+    INPUT:
+    dataset: (pd.DataFrame) Dataframe of Close prices, index is a DateTime object
+    scaler: Scaler with which we want to scale the log retun (default: StandardScaler())
+
+    OUTPUT:
+    log_return: (pd.DataFrame) Dataframe of scaled log return
+    """
+
+    ratio = np.log(dataset.pct_change().dropna() +1)
+    log_return = pd.DataFrame(scaler.fit_transform(ratio),columns = dataset.columns)
+    log_return.set_index(dataset.iloc[1:].index, inplace = True)
+    return log_return
+
+def persistenceDgr(dataset, t, w):
+
+    """
+    Plot the persistence diagram associated to the dataset, at time t, with  points corresponding to the w Buisness Days preceeding the date t (t is not included)
+
+    INPUT:
+    dataset: (pd.DataFrame) Dataframe of daily log-returns, time-indexed
+    t: (datetime) date for which we plot the persistence diagram (not included in the cloud of points)
+    w: (int) window on wich we compute the persistence diagram, i.e. size of the cloud of points
+
+    OUTPUT:
+    plot of the persistence diagram
+    
+    """
+
+    points = dataset[t-BDay(w): t].to_numpy()
+    skeleton = gd.RipsComplex(points = points)
+    Rips_tree = skeleton.create_simplex_tree(max_dimension = 2)
+    dgr = Rips_tree.persistence()
+    gd.plot_persistence_diagram(dgr)
+    plt.show()
+
+def persistenceLandscape(dataset, t, w):
+
+    """
+    Compute the persistence landscape associated to the dataset, at time t, with  points corresponding to the w Buisness Days preceeding the date t (t is not included)
+
+    INPUT:
+    dataset: (pd.DataFrame) Dataframe of daily log-returns, time-indexed
+    t: (datetime) date for which we plot the persistence landscape (not included in the cloud of points)
+    w: (int) window on wich we compute the persistence landscape, i.e. size of the cloud of points
+
+    OUTPUT:
+    L[0]: (numpy.ndarray) persistence landscape
+    
+    """
+
+
+    points = dataset[t-BDay(w): t].to_numpy()
+    skeleton = gd.RipsComplex(points = points)
+    Rips_tree = skeleton.create_simplex_tree(max_dimension = 2)
+    dgr = Rips_tree.persistence()
+    LS = gd.representations.Landscape(resolution=1000)
+    L = LS.fit_transform([Rips_tree.persistence_intervals_in_dimension(1)])
+    return L[0]
 
 def computePersistenceSeq(dataset, w, p_norms):
 
@@ -56,11 +115,26 @@ def computePersistenceSeq(dataset, w, p_norms):
     result.columns = [f'L{p}_norm' for p in p_norms]
     return result
 
-# Normalization of the Lp norms
 
-# MinMax or Standard? Or give the choice?
 
-# End of normalization
+def normalization_Lp(norms, scaler = StandardScaler()):
+
+    """
+    Normalize the Lp norms previously computed with scaler of choice
+
+    INPUT:
+    norms: (pd.DataFrame) of Lp norms, DateTime index
+    scaler: scaler of choice (default: StandardScaler())
+
+    OUTPUT:
+    norms_normalized: (pd.DataFrame) of normalized norms, same index as norms
+    """
+
+    norms_normalized = pd.DataFrame(scaler.fit_transform(norms),columns = norms.columns)
+    norms_normalized.set_index(norms.index, inplace = True)
+    return norms_normalized
+
+
 
 def avgPSD_total(Serie ,freq_cut):
 
