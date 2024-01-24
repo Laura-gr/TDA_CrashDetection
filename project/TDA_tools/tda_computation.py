@@ -17,7 +17,7 @@ from sklearn.preprocessing import StandardScaler, MinMaxScaler
 from scipy.signal import periodogram
 
 
-# Assume we have already downloaded our data from yfinance and selected the close prices. The index is already a DateTime object, frequence = Buisness days
+# Assume we have already downloaded our data from yfinance and selected the close prices. The index is already a DateTime object, frequence = Business days
 
 def scaling(dataset, scaler = StandardScaler()):
 
