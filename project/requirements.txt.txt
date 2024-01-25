@@ -1,0 +1,5 @@
+yfinance 
+datetime
+plotly.graph_objs
+requests
+json
