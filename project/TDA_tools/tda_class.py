@@ -284,17 +284,17 @@ def computation_tda(data, window_tda = 50, p_norms = [1], dimension = 1, scaling
             window_freq (int): size of the rolling window on which each persistence norm is computed
             freq_cut (float): threshold for the frequence cut
             filter_keep (str): choice of filter; 'low' to keep low frequencies, 'high' to keep high frequencies, None to keep all frequencies
-            spacing (float): choice of spacing for fft in avg_std computation
+            spacing (float): choice of spacing for fft in avg var computation
 
 
         Returns:
-            FinanceTimeSeries: all attributes computed. To access norms: .persistence_norms. To access avgPSD: .avg_PSD. To accessnorms std: .norms_std
+            FinanceTimeSeries: all attributes computed. To access norms: .persistence_norms. To access avgPSD: .avg_PSD. To access norms var: .norms_var
 
      """
     fts = FinanceTimeSeries(data)
     fts.scale_log_return(inplace = True)
     fts.compute_persistence_norms_seq(window_tda, p_norms, dimension, scaling, inplace = True)
-    fts.avg_PSD(window_freq, freq_cut, filter_keep, inplace = True)
-    fts.std_freq_filter(window_freq, freq_cut, filter_keep, spacing, inplace = True)
+    fts.avgPSD(window_freq, freq_cut, filter_keep, inplace = True)
+    fts.var_freq_filter(window_freq, freq_cut, filter_keep, spacing, inplace = True)
 
     return fts
