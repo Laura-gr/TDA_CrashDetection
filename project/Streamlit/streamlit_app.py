@@ -3,7 +3,7 @@
 """
 Created on Thu Jul 13 16:36:12 2023
 
-@author: slepot
+@authors: slepot, laura-gr
 """
 
 import streamlit as st
