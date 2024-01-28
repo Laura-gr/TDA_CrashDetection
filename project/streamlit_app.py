@@ -126,5 +126,5 @@ fig.update_xaxes(title_text='Date')
 fig.update_yaxes(title_text='Close value')
 st.plotly_chart(fig)
 
-st.write(tda_class.computation_tda(stocks_tda).avg_PSD)
+st.write(stocks_tda.persistence_norms)
 

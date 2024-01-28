@@ -4,3 +4,4 @@ plotly.graph_objs
 requests
 json
 gudhi
+pandas

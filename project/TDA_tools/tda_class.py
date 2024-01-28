@@ -17,14 +17,14 @@ import streamlit as st
 class FinanceTimeSeries:
 
     def __init__(self,data):
-#        if type(data)==pd.DataFrame or type(data)==pandas.core.frame.DataFrame :
-#            self.time_series = data
-#        else:
-#            try:
-#                self.time_series = pd.DataFrame(data)
-#            except ValueError:
-#                raise ValueError("Could not convert data to DataFrame")
-        self.time_series = pd.core.frame.DataFrame(data)
+        if type(data)==pd.DataFrame or type(data)==pandas.core.frame.DataFrame :
+            self.time_series = data
+        else:
+            try:
+                self.time_series = pd.DataFrame(data)
+            except ValueError:
+                raise ValueError("Could not convert data to DataFrame")
+        self.time_series = data
         self.return_df = False
         self.scaled = False
         self.return_scaled = False
