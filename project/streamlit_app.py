@@ -7,11 +7,21 @@ Created on Thu Jul 13 16:36:12 2023
 """
 
 import streamlit as st
+
 import yfinance as yf
 import datetime
 import plotly.graph_objs as go
+import pandas as pd
+
+
 import requests
 import json
+
+
+from TDA_tools import tda_class
+
+
+
 
 #### Title
 
@@ -41,18 +51,20 @@ with st.expander('Parameters for the analysis. :small[Here you can choose the st
     st.subheader('TDA parameters for the analysis')
 
 
-    size_persistence_window=st.selectbox('Please choose the size (in days) of the rolling window',(50,100,150,200,250))
+    size_persistence_window=st.selectbox('Choose the size (in days) of the rolling window',(50,100,150,200,250))
 
 
-    cut_freq=st.selectbox('Please choose the scale for the cut frequency', (3,2,1,0,-1,'None'))
+    cut_freq=st.selectbox('Choose the scale for the cut frequency', (3,2,1,0,-1,'None'))
     st.caption('_If you choose n as the parameter, then the frequency is $10^{-n}$. In particular, if you choose -1, then the frequency is 10_. ')
 
 
-    norm=st.selectbox('Please select the norm',(1,2,3))
+    norm_input=st.selectbox('Select the norm',(1,2,3))
+    norm=[int(norm_input)]
     st.caption('_Here you are choosing $L^p$ norm will be used._')
+    
 
 
-    type_of_filter=st.selectbox('Please select the filter',('None','low','high'))
+    type_of_filter=st.selectbox('Select the filter',(None,'low','high'))
     st.caption('_Filters can be applied during the computations._')
 
 
@@ -60,6 +72,9 @@ with st.expander('Parameters for the analysis. :small[Here you can choose the st
 
 
     size_computation_window=st.radio('Select the size of the computation window', (100,250,500))
+
+
+
 ### Stocks  to select
 
     stocks=st.multiselect('Choose a stock index', ['AAPL','TSLA','AMZN','MSFT'])
@@ -80,15 +95,36 @@ else :
 
 st.write('Moreover, the parameters you chose are the following. You consider a rolling window of {size_window} days, an $L^{p}$ norm. The plot you are looking at is an {plot_chosen} with frequency cut ${freq_cut}$ \n You are looking at the {stocks_chosen}'.format(size_window=size_persistence_window, p=norm, plot_chosen=type_of_plot, freq_cut= 10**-cut_freq, stocks_chosen=stocks))
 
+
+stocks_all=pd.DataFrame()
+
+ #Args:
+  #          window_tda (int): size of the rolling window
+   #         p_norms (list): list of integers p for which the Lp norm is computed
+    #        dimension (int): degree of the persistence module for which norms are computed
+      #      scaling (sklearn.preprocessing._data): choice of scaler to scale the norm
+         #   window_freq (int): size of the rolling window on which each persistence norm is computed
+        #    freq_cut (float): threshold for the frequence cut
+          #  filter_keep (str): choice of filter; 'low' to keep low frequencies, 'high' to keep high frequencies, None to keep all frequencies
+           # spacing (float): choice of spacing for fft in avg var computation
+
 for stock_name in stocks :
     stock_data = yf.download(stock_name, start=start_date, end=end_date)
-    stock_data.reset_index(inplace=True)
+    stocks_all[stock_name]=stock_data['Close']
+
+#st.write(type(stocks_all))
 
 
-    fig = go.Figure()
-    fig.add_trace(go.Scatter(x=stock_data.Date, y=stock_data['Close'], name='Close'))
-    fig.update_layout(title=f"{stock_name} Stock Price")
-    fig.update_xaxes(title_text='Date')
-    fig.update_yaxes(title_text='Close value')
-#fig.update_layout(y_label='Close value', x_label='Number of days')
-    st.plotly_chart(fig)
+stocks_tda=tda_class.computation_tda(data=stocks_all, window_tda=size_persistence_window, scaling=None, p_norms=norm, window_freq=size_computation_window, freq_cut=cut_freq, filter_keep=type_of_filter)
+
+
+
+fig = go.Figure()
+fig.add_trace(go.Scatter(x=stock_data.index, y=stock_data['Close'], name='Close'))
+fig.update_layout(title=f"{stock_name} Stock Price")
+fig.update_xaxes(title_text='Date')
+fig.update_yaxes(title_text='Close value')
+st.plotly_chart(fig)
+
+st.write(tda_class.computation_tda(stocks_tda).avg_PSD)
+
