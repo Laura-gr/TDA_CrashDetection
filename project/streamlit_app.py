@@ -123,8 +123,9 @@ stocks_tda=tda_class.computation_tda(data=stocks_all, window_tda=size_persistenc
 
 
 fig=go.Figure()
-fig.add_trace(go.Line(x=stocks_tda.avg_PSD.index,y=stocks_tda.avg_PSD['PSD_L1_norm']))
+fig.add_trace(go.Scatter(x=stocks_tda.avg_PSD.index,y=stocks_tda.avg_PSD['PSD_L1_norm']))
 fig.update_layout(title='{} of the chosen stocks'.format(type_of_plot))
+fig.update_traces(mode="markers+lines", hovertemplate=None)
 fig.update_xaxes(title_text='Date')
 fig.update_yaxes(title_text='{}'.format(type_of_plot))
 st.plotly_chart(fig)
