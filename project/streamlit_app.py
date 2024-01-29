@@ -12,8 +12,7 @@ import yfinance as yf
 import datetime
 import plotly.graph_objs as go
 import pandas as pd
-import seaborn as sns
-import matplotlib.pyplot as plt
+import sys
 
 
 import requests
@@ -83,6 +82,7 @@ with st.expander('Parameters for the analysis. :small[Here you can choose the st
     
 if len(stocks)<3:
            st.error('You need to chose at least three stock indices')
+           sys.exit()
            
 
     
@@ -104,19 +104,12 @@ st.write('Moreover, the parameters you chose are the following. You consider a r
 
 stocks_all=pd.DataFrame()
 
- #Args:
-  #          window_tda (int): size of the rolling window
-   #         p_norms (list): list of integers p for which the Lp norm is computed
-    #        dimension (int): degree of the persistence module for which norms are computed
-      #      scaling (sklearn.preprocessing._data): choice of scaler to scale the norm
-         #   window_freq (int): size of the rolling window on which each persistence norm is computed
-        #    freq_cut (float): threshold for the frequence cut
-          #  filter_keep (str): choice of filter; 'low' to keep low frequencies, 'high' to keep high frequencies, None to keep all frequencies
-           # spacing (float): choice of spacing for fft in avg var computation
 
+### Creating a DF with all stocks in it and index=date in time window specified by user
 for stock_name in stocks :
     stock_data = yf.download(stock_name, start=start_date, end=end_date)
     stocks_all[stock_name]=stock_data['Close']
+    ## Creating plots (but hidden in expanding boxes) for each of the chosen stocks
     with st.expander('Plot of the {} stocks'.format(stock_name)):
         fig = go.Figure()
         fig.add_trace(go.Scatter(x=stock_data.index, y=stock_data['Close'], name='Close'))
