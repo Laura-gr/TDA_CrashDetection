@@ -12,6 +12,8 @@ import yfinance as yf
 import datetime
 import plotly.graph_objs as go
 import pandas as pd
+import seaborn as sns
+import matplotlib.pyplot as plt
 
 
 import requests
@@ -25,7 +27,7 @@ from TDA_tools import tda_class
 
 #### Title
 
-st.title('_Topological data analysis for crash detection_ \n based on insert ref of paper')
+st.title('_Topological data analysis for crash detection in stock markets_')
 
 st.markdown('Here we showcase different plots related to closing stock market values. These plots are based on the paper [Topological data analysis of financial time series: Landscapes of crashes](https://www.sciencedirect.com/science/article/abs/pii/S0378437117309202) by _Marian Gidea_ and _Yuri Katz_ and are computed using some _Topological Data Analysis_ tools. \n Their idea is the following.')
 st.markdown('>We use persistence homology to detect and quantify topological patterns that appear in multidimensional time series. Using a sliding window, we extract time-dependent point cloud data sets, to which we associate a topological space. We detect transient loops that appear in this space, and we measure their persistence. This is encoded in real-valued functions referred to as a ’persistence landscapes’. We quantify the temporal changes in persistence landscapes via their $L^p$-norms.')
@@ -81,6 +83,7 @@ with st.expander('Parameters for the analysis. :small[Here you can choose the st
     
 if len(stocks)<3:
            st.error('You need to chose at least three stock indices')
+           
 
     
 if start_date <= end_date:
@@ -91,9 +94,12 @@ else:
 if type_of_filter=='None':
        st.write('You chose to apply no filter to your data.')
 else :
-       st.write('You are considering a {} filter'.format(type_of_filter))
+       if type_of_filter==None:
+              st.write('You chose to apply no filter.')
+       else :
+            st.write('You are considering a {} filter'.format(type_of_filter))
 
-st.write('Moreover, the parameters you chose are the following. You consider a rolling window of {size_window} days, an $L^{p}$ norm. The plot you are looking at is an {plot_chosen} with frequency cut ${freq_cut}$ \n You are looking at the {stocks_chosen}'.format(size_window=size_persistence_window, p=norm, plot_chosen=type_of_plot, freq_cut= 10**-cut_freq, stocks_chosen=stocks))
+st.write('Moreover, the parameters you chose are the following. You consider a rolling window of {size_window} days, an $L^{p}$ norm. The plot you are looking at is an {plot_chosen} with frequency cut ${freq_cut}$ \n You are looking at the {stocks_chosen} stocks.'.format(size_window=size_persistence_window, p=norm, plot_chosen=type_of_plot, freq_cut= 10**-cut_freq, stocks_chosen=stocks))
 
 
 stocks_all=pd.DataFrame()
@@ -111,20 +117,21 @@ stocks_all=pd.DataFrame()
 for stock_name in stocks :
     stock_data = yf.download(stock_name, start=start_date, end=end_date)
     stocks_all[stock_name]=stock_data['Close']
-
-#st.write(type(stocks_all))
+    with st.expander('Plot of the {} stocks'.format(stock_name)):
+        fig = go.Figure()
+        fig.add_trace(go.Scatter(x=stock_data.index, y=stock_data['Close'], name='Close'))
+        fig.update_layout(title=f"{stock_name} Stock Price")
+        fig.update_xaxes(title_text='Date')
+        fig.update_yaxes(title_text='Close value')
+        st.plotly_chart(fig)
 
 
 stocks_tda=tda_class.computation_tda(data=stocks_all, window_tda=size_persistence_window, scaling=None, p_norms=norm, window_freq=size_computation_window, freq_cut=cut_freq, filter_keep=type_of_filter)
 
 
-
-fig = go.Figure()
-fig.add_trace(go.Scatter(x=stock_data.index, y=stock_data['Close'], name='Close'))
-fig.update_layout(title=f"{stock_name} Stock Price")
+fig=go.Figure()
+fig.add_trace(go.Line(x=stocks_tda.avg_PSD.index,y=stocks_tda.avg_PSD['PSD_L1_norm']))
+fig.update_layout(title='{} of the chosen stocks'.format(type_of_plot))
 fig.update_xaxes(title_text='Date')
-fig.update_yaxes(title_text='Close value')
+fig.update_yaxes(title_text='{}'.format(type_of_plot))
 st.plotly_chart(fig)
-
-st.write(stocks_tda.persistence_norms)
-
