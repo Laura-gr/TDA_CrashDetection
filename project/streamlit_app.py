@@ -10,8 +10,12 @@ import streamlit as st
 
 import yfinance as yf
 import datetime
+
 import plotly.graph_objs as go
 import pandas as pd
+import seaborn as sns
+import numpy as np
+
 import sys
 
 
@@ -106,17 +110,20 @@ stocks_all=pd.DataFrame()
 
 
 ### Creating a DF with all stocks in it and index=date in time window specified by user
+
+fig = go.Figure()
 for stock_name in stocks :
     stock_data = yf.download(stock_name, start=start_date, end=end_date)
     stocks_all[stock_name]=stock_data['Close']
     ## Creating plots (but hidden in expanding boxes) for each of the chosen stocks
     with st.expander('Plot of the {} stocks'.format(stock_name)):
-        fig = go.Figure()
-        fig.add_trace(go.Scatter(x=stock_data.index, y=stock_data['Close'], name='Close'))
-        fig.update_layout(title=f"{stock_name} Stock Price")
+        fig.add_trace(go.Scatter(x=stock_data.index, y=stock_data['Close'], name='{}'.format(stock_name)))
+        #fig.update_layout(title=f"{stock_name} Stock Price")
         fig.update_xaxes(title_text='Date')
         fig.update_yaxes(title_text='Close value')
-        st.plotly_chart(fig)
+
+fig.update_layout(title=f'{stocks} closing values')
+st.plotly_chart(fig)
 
 
 stocks_tda=tda_class.computation_tda(data=stocks_all, window_tda=size_persistence_window, scaling=None, p_norms=norm, window_freq=size_computation_window, freq_cut=cut_freq, filter_keep=type_of_filter)
