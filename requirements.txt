@@ -5,3 +5,9 @@ requests
 json
 gudhi
 pandas
+streamlit
+seaborn
+numpy
+sys
+sklearn
+scipy
