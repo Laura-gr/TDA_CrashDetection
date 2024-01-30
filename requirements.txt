@@ -2,7 +2,6 @@ yfinance
 datetime
 plotly
 requests
-json
 gudhi
 pandas
 streamlit
