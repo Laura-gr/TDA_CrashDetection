@@ -69,7 +69,7 @@ with st.expander('Parameters for the analysis. :small[Here you can choose the st
     st.caption('_Filters can be applied during the computations._')
 
 
-    type_of_plot=st.radio('Pick the type of plot', ['Average PSD','Average STD'])
+    type_of_plot=st.radio('Pick the type of plot', ['Persistence norm','Average Power Spectral density','Average variance'])
 
 
     size_computation_window=st.radio('Select the size of the computation window', (100,250,500))
@@ -121,11 +121,29 @@ for stock_name in stocks :
 
 stocks_tda=tda_class.computation_tda(data=stocks_all, window_tda=size_persistence_window, scaling=None, p_norms=norm, window_freq=size_computation_window, freq_cut=cut_freq, filter_keep=type_of_filter)
 
+if type_of_plot=='Persistence norm' :
+    fig=go.Figure()
+    fig.add_trace(go.Scatter(x=stocks_tda.avg_PSD.index,y=stocks_tda.persistence_norms.iloc[:,0]))
+    fig.update_layout(title='{}'.format(type_of_plot))
+    fig.update_traces(mode="markers+lines", hovertemplate=None)
+    fig.update_xaxes(title_text='Date')
+    fig.update_yaxes(title_text='{}'.format(type_of_plot))
+    st.plotly_chart(fig)
 
-fig=go.Figure()
-fig.add_trace(go.Scatter(x=stocks_tda.avg_PSD.index,y=stocks_tda.avg_PSD.iloc[:,0]))
-fig.update_layout(title='{} of the chosen stocks'.format(type_of_plot))
-fig.update_traces(mode="markers+lines", hovertemplate=None)
-fig.update_xaxes(title_text='Date')
-fig.update_yaxes(title_text='{}'.format(type_of_plot))
-st.plotly_chart(fig)
+if type_of_plot=='Average Power Spectral density':
+    fig=go.Figure()
+    fig.add_trace(go.Scatter(x=stocks_tda.avg_PSD.index,y=stocks_tda.avg_PSD.iloc[:,0]))
+    fig.update_layout(title='{}'.format(type_of_plot))
+    fig.update_traces(mode="markers+lines", hovertemplate=None)
+    fig.update_xaxes(title_text='Date')
+    fig.update_yaxes(title_text='{}'.format(type_of_plot))
+    st.plotly_chart(fig)
+
+if type_of_plot == 'Average variance' :
+    fig=go.Figure()
+    fig.add_trace(go.Scatter(x=stocks_tda.avg_PSD.index,y=stocks_tda.norms_var.iloc[:,0]))
+    fig.update_layout(title='{}'.format(type_of_plot))
+    fig.update_traces(mode="markers+lines", hovertemplate=None)
+    fig.update_xaxes(title_text='Date')
+    fig.update_yaxes(title_text='{}'.format(type_of_plot))
+    st.plotly_chart(fig)
