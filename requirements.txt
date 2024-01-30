@@ -1,6 +1,6 @@
 yfinance 
 datetime
-plotly.graph_objs
+plotly
 requests
 json
 gudhi
