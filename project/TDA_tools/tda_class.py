@@ -1,4 +1,5 @@
 from copy import deepcopy
+import sys
 import gudhi as gd
 import pandas as pd
 import numpy as np
@@ -39,6 +40,46 @@ class FinanceTimeSeries:
     def copy(self):
         fts = deepcopy(self)
         return fts
+    
+    def elements(self):
+        """
+        Prints all attributes
+
+        Returns:
+        None.
+
+        """
+        for key, item in sorted(self.__dict__.items()):
+            print(key, ',', str(type(item))[8:-2])
+    
+    def get_elements(self):
+        """
+        Gets all attributes
+
+        Returns:
+            A list of all keys of attributes of the class
+        """
+        elements_list = []
+        for key, item in sorted(self.__dict__.items()):
+            elements_list.append(key)
+        return elements_list
+
+    
+    def memory(self, details = False):
+        """
+        Prints memory information of the class instance
+        details prints memory information for all class attributes
+
+        Returns:
+        None.
+
+        """
+        print('Baseline class takes up ', 
+              sum([sys.getsizeof(x) for x in self.__dict__.values()])/1e6, 
+              ' Mb')
+        if details:
+            for key,item in sorted(self.__dict__.items()):
+                print(key, sys.getsizeof(item)/1e6, 'Mb')  
     
     def log_return(self, inplace = False):
 
