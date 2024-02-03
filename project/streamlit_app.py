@@ -27,10 +27,12 @@ from TDA_tools import tda_class
 
 
 
-
 #### Title
 
 st.title('_Topological data analysis for crash detection in stock markets_')
+
+
+#st.write(tickers[:5])
 
 st.markdown('Here we showcase different plots related to closing stock market values. These plots are based on the paper [Topological data analysis of financial time series: Landscapes of crashes](https://www.sciencedirect.com/science/article/abs/pii/S0378437117309202) by _Marian Gidea_ and _Yuri Katz_ and are computed using some _Topological Data Analysis_ tools. \n Their idea is the following.')
 st.markdown('>We use persistence homology to detect and quantify topological patterns that appear in multidimensional time series. Using a sliding window, we extract time-dependent point cloud data sets, to which we associate a topological space. We detect transient loops that appear in this space, and we measure their persistence. This is encoded in real-valued functions referred to as a ’persistence landscapes’. We quantify the temporal changes in persistence landscapes via their $L^p$-norms.')
@@ -41,8 +43,8 @@ st.header('Choosing the parameters')
 with st.expander('Parameters for the analysis. :small[Here you can choose the stock indexes you want to look at and some other technical parameters for the computations]'):
 
     ### Date
-    min_date = datetime.date(2020, 1, 1)
-    max_date = datetime.date(2022, 12, 31)
+    min_date = datetime.date(1995, 1, 1)
+    max_date = datetime.date(2023, 12, 31)
 
 
     start_date = st.date_input("Start date", min_value=min_date, max_value=max_date, value=min_date)
@@ -107,6 +109,7 @@ st.write('Moreover, the parameters you chose are the following. You consider a r
 
 
 stocks_all=pd.DataFrame()
+
 
 
 ### Creating a DF with all stocks in it and index=date in time window specified by user
