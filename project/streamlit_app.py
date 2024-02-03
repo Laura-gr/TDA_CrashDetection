@@ -31,88 +31,42 @@ from TDA_tools import tda_class
 
 st.title('_Topological data analysis for crash detection in stock markets_')
 
-
 #st.write(tickers[:5])
 
 st.markdown('Here we showcase different plots related to closing stock market values. These plots are based on the paper [Topological data analysis of financial time series: Landscapes of crashes](https://www.sciencedirect.com/science/article/abs/pii/S0378437117309202) by _Marian Gidea_ and _Yuri Katz_ and are computed using some _Topological Data Analysis_ tools. \n Their idea is the following.')
-st.markdown('>We use persistence homology to detect and quantify topological patterns that appear in multidimensional time series. Using a sliding window, we extract time-dependent point cloud data sets, to which we associate a topological space. We detect transient loops that appear in this space, and we measure their persistence. This is encoded in real-valued functions referred to as a ’persistence landscapes’. We quantify the temporal changes in persistence landscapes via their $L^p$-norms.')
+st.markdown('>We use persistence homology to detect and quantify topological patterns that appear in multidimensional time series. [...] Our study suggests that TDA provides a new type of econometric analysis, which complements the standard statistical measures. \n The method can be used to detect early warning signals of imminent market crashes. We believe that this approach can be used beyond the analysis of financial time series presented here.')
 ##### General input parameters
 
-st.header('Choosing the parameters')
 
-with st.expander('Parameters for the analysis. :small[Here you can choose the stock indexes you want to look at and some other technical parameters for the computations]'):
-
-    ### Date
-    min_date = datetime.date(1995, 1, 1)
-    max_date = datetime.date(2023, 12, 31)
+### Date
+min_date = datetime.date(1995, 1, 1)
+max_date = datetime.date(2023, 12, 31)
 
 
-    start_date = st.date_input("Start date", min_value=min_date, max_value=max_date, value=min_date)
-    end_date = st.date_input("End date", min_value=min_date, max_value=max_date, value=max_date)
+start_date = st.date_input("Start date", min_value=min_date, max_value=max_date, value=min_date)
+end_date = st.date_input("End date", min_value=min_date, max_value=max_date, value=max_date)
 
     
-
-### TDA params to select
-
-
-    st.subheader('TDA parameters for the analysis')
-
-
-    size_persistence_window=st.selectbox('Choose the size (in days) of the rolling window',(50,100,150,200,250))
-
-
-    cut_freq=st.selectbox('Choose the scale for the cut frequency', (3,2,1,0,-1,'None'))
-    st.caption('_If you choose n as the parameter, then the frequency is $10^{-n}$. In particular, if you choose -1, then the frequency is 10_. ')
-
-
-    norm_input=st.selectbox('Select the norm',(1,2,3))
-    norm=[int(norm_input)]
-    st.caption('_Here you are choosing $L^p$ norm will be used._')
-    
-
-
-    type_of_filter=st.selectbox('Select the filter',(None,'low','high'))
-    st.caption('_Filters can be applied during the computations._')
-
-
-    type_of_plot=st.radio('Pick the type of plot', ['Persistence norm','Average Power Spectral density','Average variance'])
-
-
-    size_computation_window=st.radio('Select the size of the computation window', (100,250,500))
-
-
-
 ### Stocks  to select
 
-    stocks=st.multiselect('Choose a stock index', ['AAPL','TSLA','AMZN','MSFT'])
+stocks=st.multiselect('Choose a stock index', ['AAPL','TSLA','AMZN','MSFT'])
     
 if len(stocks)<3:
-           st.error('You need to chose at least three stock indices')
-           sys.exit()
+    st.error('You need to chose at least three stock indices')
+    sys.exit()
            
 
     
 if start_date <= end_date:
-        st.success(" Chosen start date: `{}`\n\n Chosen end date:`{}`.".format(start_date, end_date))
+    st.success(" Chosen start date: `{}`\n\n  Chosen end date: `{}`.".format(start_date, end_date))
 else:
-        st.error("Error: End date must be after start date.")
-
-if type_of_filter=='None':
-       st.write('You chose to apply no filter to your data.')
-else :
-       if type_of_filter==None:
-              st.write('You chose to apply no filter.')
-       else :
-            st.write('You are considering a {} filter'.format(type_of_filter))
-
-st.write('Moreover, the parameters you chose are the following. You consider a rolling window of {size_window} days, an $L^{p}$ norm. The plot you are looking at is an {plot_chosen} with frequency cut ${freq_cut}$ \n You are looking at the {stocks_chosen} stocks.'.format(size_window=size_persistence_window, p=norm, plot_chosen=type_of_plot, freq_cut= 10**-cut_freq, stocks_chosen=stocks))
-
-
-stocks_all=pd.DataFrame()
-
+    st.error("Error: End date must be after start date.")
 
 
 ### Creating a DF with all stocks in it and index=date in time window specified by user
+
+
+stocks_all=pd.DataFrame()
 
 fig = go.Figure()
 for stock_name in stocks :
@@ -128,8 +82,65 @@ for stock_name in stocks :
 fig.update_layout(title=f'{stocks} closing values')
 st.plotly_chart(fig)
 
+    
+
+st.subheader('Measures of volatility')
+
+st.write("For predecting crashes, looking at the closing values isn't enough. \n The authors suggest new measures of volatility for markets that could provide early warning for imminent crashes.")
+
+with st.expander('Parameters for the analysis'):
+
+    ### TDA params to select
+
+    size_persistence_window=st.selectbox('Choose the size (in days) of the rolling window',(50,100,150,200,250))
+
+    norm_input=st.selectbox('Select the norm',(1,2,3))
+    norm=[int(norm_input)]
+    st.caption('_Here you are choosing $L^p$ norm will be used._')
+
+type_of_plot=st.radio('Choose which measure you want to display.', ['Persistence norm','Average Power Spectral density','Average variance'], captions=["Using a sliding window, we extract time-dependent point \
+                  cloud data sets, to which we associate a topological space. We detect transient loops that appear in this space, and we measure their persistence. \
+                 This is encoded in real-valued functions referred to as a persistence landscapes’. We quantify the temporal changes in persistence landscapes via their Lp-norms.","Power Spectral density describes how the power of a signal or time series is distributed over frequency. \n Here we compute its average over the user-selected frequencies.","We compute the variance of the signal over the user-selected frequencies."])
+
+
+
+if type_of_plot!='Persistence norm' :
+
+    with st.expander('For the plots you chose, you need to specify the following.') :
+        cut_freq=st.selectbox('Choose the scale for the cut frequency', (3,2,1,0,-1,'None'))
+        st.caption('_If you choose n as the parameter, then the frequency is $10^{-n}$. In particular, if you choose -1, then the frequency is 10_. ')
+
+        type_of_filter=st.selectbox('Select the filter',(None,'low','high'))
+        st.caption('_Filters can be applied during the computations._')
+
+        size_computation_window=st.radio('Select the size of the computation window', (100,250,500))
+    
+    st.write('Moreover, the parameters you chose are the following. You consider a rolling window of {size_window} days, an $L^p$ norm. The plot you are looking at is an {plot_chosen} with frequency cut ${freq_cut}$ \n You are looking at the {stocks_chosen} stocks.'.format(size_window=size_persistence_window, p=norm, plot_chosen=type_of_plot, freq_cut= 10**-cut_freq, stocks_chosen=stocks))
+
+
+
+    if type_of_filter=='None':
+       st.write('You chose to apply no filter to your data.')
+    else :
+       if type_of_filter==None:
+              st.write('You chose to apply no filter.')
+       else :
+            st.write('You are considering a {} filter'.format(type_of_filter))
+
+else :
+    cut_freq=0
+    type_of_filter=None
+    size_computation_window=1
+    st.write('Moreover, the parameters you chose are the following. You consider a rolling window of {size_window} days, an $L^p$ norm. The plot you are looking at is an {plot_chosen} \n You are looking at the {stocks_chosen} stocks.'.format(size_window=size_persistence_window, p=norm, plot_chosen=type_of_plot, stocks_chosen=stocks))
+
+
+
+
+
+
 
 stocks_tda=tda_class.computation_tda(data=stocks_all, window_tda=size_persistence_window, scaling=None, p_norms=norm, window_freq=size_computation_window, freq_cut=cut_freq, filter_keep=type_of_filter)
+
 
 if type_of_plot=='Persistence norm' :
     fig=go.Figure()
