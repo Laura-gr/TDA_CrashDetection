@@ -72,15 +72,23 @@ else:
 ### Creating a DF with all stocks in it and index=date in time window specified by user
 
 
+dict_of_crashes={'Dot Com':datetime.date(2000,3,10), 'September 11 Attacks':datetime.date(2001,9,11),'Lehman bankruptcy':datetime.date(2008,9,15)}
+
+
 stocks_all=pd.DataFrame()
 fig = go.Figure()
 
 for stock_name in stocks_input :
     stock_data = yf.download(indices_dict[stock_name], start=start_date, end=end_date)
     stocks_all[stock_name]=stock_data['Close']
+    stocks_all.index=pd.to_datetime(stocks_all.index.date)
     ## Creating plots (but hidden in expanding boxes) for each of the chosen stocks
     fig.add_trace(go.Scatter(x=stock_data.index, y=stock_data['Close'], name='{}'.format(stock_name)))
-    #fig.update_layout(title=f"{stock_name} Stock Price")
+    
+for crisis in dict_of_crashes :
+    if start_date <= dict_of_crashes[crisis] <= end_date :
+        st.write('The {} crisis happened during the period you are looking at'.format(crisis))
+        #fig.add_vline(x=dict_of_crashes[crisis], annotation_text='hey',line_dash='dash')
     
 fig.update_xaxes(title_text='Date')
 fig.update_yaxes(title_text='Close value')
