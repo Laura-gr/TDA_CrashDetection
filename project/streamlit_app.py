@@ -39,17 +39,23 @@ st.markdown('>We use persistence homology to detect and quantify topological pat
 
 
 ### Date
-min_date = datetime.date(1995, 1, 1)
+min_date = datetime.date(2000, 1, 1)
 max_date = datetime.date(2023, 12, 31)
 
 
-start_date = st.date_input("Start date", min_value=min_date, max_value=max_date, value=min_date)
-end_date = st.date_input("End date", min_value=min_date, max_value=max_date, value=max_date)
+start_date = st.date_input("Start date", min_value=min_date, max_value=max_date, value=min_date, help='For reasons of computation costs, we limit the starting date to January 2000.')
 
+end_date = st.date_input("End date", min_value=min_date, max_value=max_date, value=max_date)
     
 ### Stocks  to select
 
-stocks=st.multiselect('Choose a stock index', ['AAPL','TSLA','AMZN','MSFT'])
+indices_dict={'Russell 2000':'^RUT','Dow Jones Industrial Average':'^DJI','NASDAQ Composite':'^IXIC','NYSE Composite':'^NYA', 'CAC40':'^FCHI', 'DAX Germany':'DAX','AEX Amsterdam':'^AEX', 'FTSE 100':'^FTSE','IBEX 35':'^IBEX', 'Euronext 100':'^N100','Nikkei 225':'^N225','BEL 20':'^BFX','MOEX Russia':'IMOEX.ME','Hang Seng':'^HSI','All Ordinaries':'^AORD','IPC Mexico':'^MXX','MERVAL':'^MERV' }
+
+indices_names=list(x for x in indices_dict.keys())
+
+stocks_input=st.multiselect('Choose a stock index', indices_names)
+
+stocks=[indices_dict[x] for x in stocks_input]
     
 if len(stocks)<3:
     st.error('You need to chose at least three stock indices')
@@ -67,19 +73,18 @@ else:
 
 
 stocks_all=pd.DataFrame()
-
 fig = go.Figure()
-for stock_name in stocks :
-    stock_data = yf.download(stock_name, start=start_date, end=end_date)
+
+for stock_name in stocks_input :
+    stock_data = yf.download(indices_dict[stock_name], start=start_date, end=end_date)
     stocks_all[stock_name]=stock_data['Close']
     ## Creating plots (but hidden in expanding boxes) for each of the chosen stocks
-    with st.expander('Plot of the {} stocks'.format(stock_name)):
-        fig.add_trace(go.Scatter(x=stock_data.index, y=stock_data['Close'], name='{}'.format(stock_name)))
-        #fig.update_layout(title=f"{stock_name} Stock Price")
-        fig.update_xaxes(title_text='Date')
-        fig.update_yaxes(title_text='Close value')
-
-fig.update_layout(title=f'{stocks} closing values')
+    fig.add_trace(go.Scatter(x=stock_data.index, y=stock_data['Close'], name='{}'.format(stock_name)))
+    #fig.update_layout(title=f"{stock_name} Stock Price")
+    
+fig.update_xaxes(title_text='Date')
+fig.update_yaxes(title_text='Close value')
+fig.update_layout(title=f'{stocks_input} closing values')
 st.plotly_chart(fig)
 
     
@@ -115,7 +120,7 @@ if type_of_plot!='Persistence norm' :
 
         size_computation_window=st.radio('Select the size of the computation window', (100,250,500))
     
-    st.write('Moreover, the parameters you chose are the following. You consider a rolling window of {size_window} days, an $L^p$ norm. The plot you are looking at is an {plot_chosen} with frequency cut ${freq_cut}$ \n You are looking at the {stocks_chosen} stocks.'.format(size_window=size_persistence_window, p=norm, plot_chosen=type_of_plot, freq_cut= 10**-cut_freq, stocks_chosen=stocks))
+    st.write('Moreover, the parameters you chose are the following. You consider a rolling window of {size_window} days, an $L^p$ norm. The plot you are looking at is an {plot_chosen} with frequency cut ${freq_cut}$ \n You are looking at the {stocks_chosen} stocks.'.format(size_window=size_persistence_window, p=norm, plot_chosen=type_of_plot, freq_cut= 10**-cut_freq, stocks_chosen=stocks_input))
 
 
 
@@ -131,7 +136,7 @@ else :
     cut_freq=0
     type_of_filter=None
     size_computation_window=1
-    st.write('Moreover, the parameters you chose are the following. You consider a rolling window of {size_window} days, an $L^p$ norm. The plot you are looking at is an {plot_chosen} \n You are looking at the {stocks_chosen} stocks.'.format(size_window=size_persistence_window, p=norm, plot_chosen=type_of_plot, stocks_chosen=stocks))
+    st.write('Moreover, the parameters you chose are the following. You consider a rolling window of {size_window} days, an $L^p$ norm. The plot you are looking at is an {plot_chosen} \n You are looking at the {stocks_chosen} stocks.'.format(size_window=size_persistence_window, p=norm, plot_chosen=type_of_plot, stocks_chosen=stocks_input))
 
 
 
