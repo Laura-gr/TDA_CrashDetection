@@ -46,10 +46,13 @@ max_date = datetime.date(2023, 12, 31)
 start_date = st.date_input("Start date", min_value=min_date, max_value=max_date, value=min_date, help='For reasons of computation costs, we limit the starting date to January 2000.')
 
 end_date = st.date_input("End date", min_value=min_date, max_value=max_date, value=max_date)
-    
+
+start_date = datetime.datetime(start_date.year, start_date.month, start_date.day)
+end_date = datetime.datetime(end_date.year, end_date.month, end_date.day)
+
 ### Stocks  to select
 
-indices_dict={'Russell 2000':'^RUT','Dow Jones Industrial Average':'^DJI','NASDAQ Composite':'^IXIC','NYSE Composite':'^NYA', 'CAC40':'^FCHI', 'DAX Germany':'DAX','AEX Amsterdam':'^AEX', 'FTSE 100':'^FTSE','IBEX 35':'^IBEX', 'Euronext 100':'^N100','Nikkei 225':'^N225','BEL 20':'^BFX','MOEX Russia':'IMOEX.ME','Hang Seng':'^HSI','All Ordinaries':'^AORD','IPC Mexico':'^MXX','MERVAL':'^MERV' }
+indices_dict={'S&P 500':'^SPX','Russell 2000':'^RUT','Dow Jones Industrial Average':'^DJI','NASDAQ Composite':'^IXIC','NYSE Composite':'^NYA', 'CAC40':'^FCHI', 'DAX Germany':'DAX','AEX Amsterdam':'^AEX', 'FTSE 100':'^FTSE','IBEX 35':'^IBEX', 'Euronext 100':'^N100','Nikkei 225':'^N225','BEL 20':'^BFX','MOEX Russia':'IMOEX.ME','Hang Seng':'^HSI','All Ordinaries':'^AORD','IPC Mexico':'^MXX','MERVAL':'^MERV' }
 
 indices_names=list(x for x in indices_dict.keys())
 
@@ -72,7 +75,7 @@ else:
 ### Creating a DF with all stocks in it and index=date in time window specified by user
 
 
-dict_of_crashes={'Dot Com':datetime.date(2020,3,10), 'September 11 Attacks':datetime.date(2020,9,11),'Lehman bankruptcy':datetime.date(2020,9,15)}
+dict_of_crashes={'Dot Com':datetime.datetime(2000,3,10), 'September 11 Attacks':datetime.datetime(2001,9,11),'Lehman bankruptcy':datetime.datetime(2008,9,15)}
 
 
 stocks_all=pd.DataFrame()
@@ -82,12 +85,15 @@ for stock_name in stocks_input :
     stock_data = yf.download(indices_dict[stock_name], start=start_date, end=end_date)
     stocks_all[stock_name]=stock_data['Close']
     fig.add_trace(go.Scatter(x=stock_data.index, y=stock_data['Close'], name='{}'.format(stock_name)))
-    
+
+
 for crisis in dict_of_crashes :
-    if start_date <= dict_of_crashes[crisis] <= end_date :
-        st.write('The {} crisis happened during the period you are looking at'.format(crisis))
-        fig.add_vline(x=1000, annotation_text='hey',line_dash='dash')
-    
+    if start_date <= dict_of_crashes[crisis] and dict_of_crashes[crisis] <= end_date :
+        #st.write('The {} crisis happened during the period you are looking at'.format(crisis))
+        fig.add_vline(x=dict_of_crashes[crisis].timestamp()*1000 ,line_dash='dash', line_color = 'green')
+        fig.add_annotation(x=dict_of_crashes[crisis].timestamp()*1000, y=0.85, text = crisis, textangle = -30, yref = 'y domain', xanchor = 'left', yanchor = 'bottom', showarrow = False)
+
+
 fig.update_xaxes(title_text='Date')
 fig.update_yaxes(title_text='Close value')
 fig.update_layout(title=f'{stocks_input} closing values')
