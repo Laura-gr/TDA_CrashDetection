@@ -138,10 +138,7 @@ if type_of_plot!='Persistence norm' :
     if type_of_filter=='None':
        st.write('You chose to apply no filter to your data.')
     else :
-       if type_of_filter==None:
-              st.write('You chose to apply no filter.')
-       else :
-            st.write('You are considering a {} filter'.format(type_of_filter))
+        st.write('You are considering a {} filter'.format(type_of_filter))
 
 else :
     cut_freq=0
@@ -165,6 +162,12 @@ if type_of_plot=='Persistence norm' :
     fig.update_traces(mode="markers+lines", hovertemplate=None)
     fig.update_xaxes(title_text='Date')
     fig.update_yaxes(title_text='{}'.format(type_of_plot))
+    for crisis in dict_of_crashes :
+        if start_date <= dict_of_crashes[crisis] and dict_of_crashes[crisis] <= end_date :
+            #st.write('The {} crisis happened during the period you are looking at'.format(crisis))
+            fig.add_vline(x=dict_of_crashes[crisis].timestamp()*1000 ,line_dash='dash', line_color = 'green')
+            fig.add_annotation(x=dict_of_crashes[crisis].timestamp()*1000, y=0.85, text = crisis, textangle = -30, yref = 'y domain', xanchor = 'left', yanchor = 'bottom', showarrow = False)
+
     st.plotly_chart(fig)
 
 if type_of_plot=='Average Power Spectral density':
@@ -174,6 +177,12 @@ if type_of_plot=='Average Power Spectral density':
     fig.update_traces(mode="markers+lines", hovertemplate=None)
     fig.update_xaxes(title_text='Date')
     fig.update_yaxes(title_text='{}'.format(type_of_plot))
+    for crisis in dict_of_crashes :
+        if start_date <= dict_of_crashes[crisis] and dict_of_crashes[crisis] <= end_date :
+            #st.write('The {} crisis happened during the period you are looking at'.format(crisis))
+            fig.add_vline(x=dict_of_crashes[crisis].timestamp()*1000 ,line_dash='dash', line_color = 'green')
+            fig.add_annotation(x=dict_of_crashes[crisis].timestamp()*1000, y=0.85, text = crisis, textangle = -30, yref = 'y domain', xanchor = 'left', yanchor = 'bottom', showarrow = False)
+
     st.plotly_chart(fig)
 
 if type_of_plot == 'Average variance' :
@@ -183,4 +192,10 @@ if type_of_plot == 'Average variance' :
     fig.update_traces(mode="markers+lines", hovertemplate=None)
     fig.update_xaxes(title_text='Date')
     fig.update_yaxes(title_text='{}'.format(type_of_plot))
+    for crisis in dict_of_crashes :
+        if start_date <= dict_of_crashes[crisis] and dict_of_crashes[crisis] <= end_date :
+            #st.write('The {} crisis happened during the period you are looking at'.format(crisis))
+            fig.add_vline(x=dict_of_crashes[crisis].timestamp()*1000 ,line_dash='dash', line_color = 'green')
+            fig.add_annotation(x=dict_of_crashes[crisis].timestamp()*1000, y=0.85, text = crisis, textangle = -30, yref = 'y domain', xanchor = 'left', yanchor = 'bottom', showarrow = False)
+
     st.plotly_chart(fig)
