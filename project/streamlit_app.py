@@ -63,6 +63,8 @@ stocks=[indices_dict[x] for x in stocks_input]
     
 if len(stocks)<3:
     st.error('You need to chose at least three stock indices')
+    st.caption(":gray[_This little app was made by [L. Grave de Peralta](https://github.com/Laura-gr), [A. Jannaud](https://github.com/FloerHogy) and [S. Lepot](https://github.com/todortodor/)._]")
+
     sys.exit()
 
 stock_str=' '
@@ -227,3 +229,5 @@ if st.button("Compute and plot."):
                     fig.add_annotation(x=dict_of_crashes[crisis].timestamp()*1000, y=0.85, text = crisis, textangle = -30, yref = 'y domain', xanchor = 'left', yanchor = 'bottom', showarrow = False)
 
             st.plotly_chart(fig)
+
+st.caption(":gray[_This little app was made by [L. Grave de Peralta](https://github.com/Laura-gr), [A. Jannaud](https://github.com/FloerHogy) and [S. Lepot](https://github.com/todortodor/)._]")
