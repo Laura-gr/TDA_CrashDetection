@@ -1,2 +1,11 @@
-yfinance
+yfinance 
+datetime
 plotly
+requests
+gudhi
+pandas
+streamlit
+seaborn
+numpy
+scikit-learn
+scipy
