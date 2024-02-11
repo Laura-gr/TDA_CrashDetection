@@ -10,6 +10,7 @@ import streamlit as st
 
 import yfinance as yf
 import datetime
+import time
 
 import plotly.graph_objs as go
 import pandas as pd
@@ -39,7 +40,7 @@ st.markdown('>We use persistence homology to detect and quantify topological pat
 
 
 ### Date
-min_date = datetime.date(2000, 1, 1)
+min_date = datetime.date(1990, 1, 1)
 max_date = datetime.date(2023, 12, 31)
 
 
@@ -52,7 +53,7 @@ end_date = datetime.datetime(end_date.year, end_date.month, end_date.day)
 
 ### Stocks  to select
 
-indices_dict={'S&P 500':'^SPX','Russell 2000':'^RUT','Dow Jones Industrial Average':'^DJI','NASDAQ Composite':'^IXIC','NYSE Composite':'^NYA', 'CAC40':'^FCHI', 'DAX Germany':'DAX','AEX Amsterdam':'^AEX', 'FTSE 100':'^FTSE','IBEX 35':'^IBEX', 'Euronext 100':'^N100','Nikkei 225':'^N225','BEL 20':'^BFX','MOEX Russia':'IMOEX.ME','Hang Seng':'^HSI','All Ordinaries':'^AORD','IPC Mexico':'^MXX','MERVAL':'^MERV' }
+indices_dict={'S&P 500':'^SPX','Russell 2000':'^RUT','Dow Jones Industrial Average':'^DJI','NASDAQ Composite':'^IXIC','NYSE Composite':'^NYA', 'CAC40':'^FCHI','AEX Amsterdam':'^AEX', 'FTSE 100':'^FTSE','IBEX 35':'^IBEX', 'Euronext 100':'^N100','Nikkei 225':'^N225','BEL 20':'^BFX','MOEX Russia':'IMOEX.ME','Hang Seng':'^HSI','All Ordinaries':'^AORD','IPC Mexico':'^MXX','MERVAL':'^MERV' }
 
 indices_names=list(x for x in indices_dict.keys())
 
@@ -63,6 +64,12 @@ stocks=[indices_dict[x] for x in stocks_input]
 if len(stocks)<3:
     st.error('You need to chose at least three stock indices')
     sys.exit()
+
+stock_str=' '
+for x in stocks_input[:-1]:
+    stock_str += x+', '
+stock_str += 'and '+stocks_input[-1]
+
            
 
     
@@ -104,6 +111,11 @@ st.subheader('Measures of volatility')
 
 st.write("For predecting crashes, looking at the closing values isn't enough. \n The authors suggest new measures of volatility for markets that could provide early warning for imminent crashes.")
 
+
+type_of_plot=st.radio('Choose which measure you want to display.', ['Persistence norm','Average Power Spectral density','Average variance'], captions=["Using a sliding window, we extract time-dependent point \
+                  cloud data sets, to which we associate a topological space. We detect transient loops that appear in this space, and we measure their persistence. \
+                 This is encoded in real-valued functions referred to as a persistence landscapes’. We quantify the temporal changes in persistence landscapes via their Lp-norms.","Power Spectral density describes how the power of a signal or time series is distributed over frequency. \n Here we compute its average over the user-selected frequencies.","We compute the variance of the signal over the user-selected frequencies."])
+
 with st.expander('Parameters for the analysis'):
 
     ### TDA params to select
@@ -114,88 +126,104 @@ with st.expander('Parameters for the analysis'):
     norm=[int(norm_input)]
     st.caption('_Here you are choosing $L^p$ norm will be used._')
 
-type_of_plot=st.radio('Choose which measure you want to display.', ['Persistence norm','Average Power Spectral density','Average variance'], captions=["Using a sliding window, we extract time-dependent point \
-                  cloud data sets, to which we associate a topological space. We detect transient loops that appear in this space, and we measure their persistence. \
-                 This is encoded in real-valued functions referred to as a persistence landscapes’. We quantify the temporal changes in persistence landscapes via their Lp-norms.","Power Spectral density describes how the power of a signal or time series is distributed over frequency. \n Here we compute its average over the user-selected frequencies.","We compute the variance of the signal over the user-selected frequencies."])
-
 
 
 if type_of_plot!='Persistence norm' :
 
-    with st.expander('For the plots you chose, you need to specify the following.') :
-        cut_freq=st.selectbox('Choose the scale for the cut frequency', (3,2,1,0,-1,'None'))
-        st.caption('_If you choose n as the parameter, then the frequency is $10^{-n}$. In particular, if you choose -1, then the frequency is 10_. ')
+    with st.expander('For the plot you chose, you need to specify the following.') :
+        st.write('Here we decompose our signal in the Fourier domain. As such, we can choose to focus on different types of frequencies and to set the thresholds between those frequencies at different levels.')
+        filter=st.selectbox('Select the type of filter for the frequencies.',('No filter','low-pass','high-pass'), help='Here you choose if you want to look higher or lower than your threshold or to look at all frequencies. If you look at all frequencies and then there is no need to choose a threshold.')
+        
+        
+        if filter=='No filter' :
+            type_of_filter=None
+            cut_freq_type='all'
+            cut_freq=None
+            
+        else :
+            type_of_filter=filter.split('-')[0]
+            
+            cut_freq_type = st.radio('Pick the threshold', ['low','medium low', 'medium high', 'high', 'custom'],help='You can cut the frequencies at different scales. We provide some values or you can enter a custom frequency cut value.')
+        
+            cut_freq_dict={'low':4.27,'medium low':19.5,'medium high':60.2,'high':90.7}
 
-        type_of_filter=st.selectbox('Select the filter',(None,'low','high'))
-        st.caption('_Filters can be applied during the computations._')
+            if cut_freq_type=='custom':
+                cut_freq_100=st.number_input('Insert a number between 0 and 100')
+
+                if cut_freq_100 >100 or cut_freq_100 < 0 :
+                    st.error('The value should be between 0 and 100')
+                    sys.exit()
+            else :
+                cut_freq_100 = cut_freq_dict[cut_freq_type]
+        
+            cut_freq=0.00492 * cut_freq_100 + 0.004
+            st.write('You are considering a {}-pass filter with a {} cutoff frequency.'.format(type_of_filter,cut_freq_type))
 
         size_computation_window=st.radio('Select the size of the computation window', (100,250,500))
-    
-    st.write('Moreover, the parameters you chose are the following. You consider a rolling window of {size_window} days, an $L^p$ norm. The plot you are looking at is an {plot_chosen} with frequency cut ${freq_cut}$ \n You are looking at the {stocks_chosen} stocks.'.format(size_window=size_persistence_window, p=norm, plot_chosen=type_of_plot, freq_cut= 10**-cut_freq, stocks_chosen=stocks_input))
+        
+    st.write('The parameters you chose are the following. \n \n You consider a rolling window of {size_window} days, an $L^{p}$ norm. The plot it will display at is a {plot_chosen} plot '.format(size_window=size_persistence_window, p=norm[0], plot_chosen=type_of_plot)+ 'for the '+stock_str+ ' indices.')
 
-
-
-    if type_of_filter=='None':
-       st.write('You chose to apply no filter to your data.')
+    if type_of_filter==None:
+       st.write('You chose to apply no filter to your data and therefore considering all frequencies.')
     else :
-        st.write('You are considering a {} filter'.format(type_of_filter))
+        st.write('You are considering a {}-pass filter with a {} cutoff frequency.'.format(type_of_filter,cut_freq_type))
 
 else :
     cut_freq=0
     type_of_filter=None
     size_computation_window=1
-    st.write('Moreover, the parameters you chose are the following. You consider a rolling window of {size_window} days, an $L^p$ norm. The plot you are looking at is an {plot_chosen} \n You are looking at the {stocks_chosen} stocks.'.format(size_window=size_persistence_window, p=norm, plot_chosen=type_of_plot, stocks_chosen=stocks_input))
+    st.write('The parameters you chose are the following. \n \n You consider a rolling window of {size_window} days, an $L^{p}$ norm. The plot it will display at is a {plot_chosen} plot '.format(size_window=size_persistence_window, p=norm[0], plot_chosen=type_of_plot)+ 'for the '+stock_str+ ' indices.')
 
 
 
 
 
+if st.button("Compute and plot."):
+    with st.spinner('Wait for it... Maybe go fetch a coffee in the meantime.'):
+        stocks_tda=tda_class.computation_tda(data=stocks_all, window_tda=size_persistence_window, scaling=None, p_norms=norm, window_freq=size_computation_window, freq_cut=cut_freq, filter_keep=type_of_filter)
+        
+        
+        if type_of_plot=='Persistence norm' :
+            fig=go.Figure()
+            fig.add_trace(go.Scatter(x=stocks_tda.avg_PSD.index,y=stocks_tda.persistence_norms.iloc[:,0]))
+            fig.update_layout(title='{}'.format(type_of_plot))
+            fig.update_traces(mode="markers+lines", hovertemplate=None)
+            fig.update_xaxes(title_text='Date')
+            fig.update_yaxes(title_text='{}'.format(type_of_plot))
+            for crisis in dict_of_crashes :
+                if start_date <= dict_of_crashes[crisis] and dict_of_crashes[crisis] <= end_date :
+                    #st.write('The {} crisis happened during the period you are looking at'.format(crisis))
+                    fig.add_vline(x=dict_of_crashes[crisis].timestamp()*1000 ,line_dash='dash', line_color = 'green')
+                    fig.add_annotation(x=dict_of_crashes[crisis].timestamp()*1000, y=0.85, text = crisis, textangle = -30, yref = 'y domain', xanchor = 'left', yanchor = 'bottom', showarrow = False)
 
+            st.plotly_chart(fig)
 
-stocks_tda=tda_class.computation_tda(data=stocks_all, window_tda=size_persistence_window, scaling=None, p_norms=norm, window_freq=size_computation_window, freq_cut=cut_freq, filter_keep=type_of_filter)
+        if type_of_plot=='Average Power Spectral density':
+            fig=go.Figure()
+            fig.add_trace(go.Scatter(x=stocks_tda.avg_PSD.index,y=stocks_tda.avg_PSD.iloc[:,0]))
+            fig.update_layout(title='{}'.format(type_of_plot))
+            fig.update_traces(mode="markers+lines", hovertemplate=None)
+            fig.update_xaxes(title_text='Date')
+            fig.update_yaxes(title_text='{}'.format(type_of_plot))
+            for crisis in dict_of_crashes :
+                if start_date <= dict_of_crashes[crisis] and dict_of_crashes[crisis] <= end_date :
+                    #st.write('The {} crisis happened during the period you are looking at'.format(crisis))
+                    fig.add_vline(x=dict_of_crashes[crisis].timestamp()*1000 ,line_dash='dash', line_color = 'green')
+                    fig.add_annotation(x=dict_of_crashes[crisis].timestamp()*1000, y=0.85, text = crisis, textangle = -30, yref = 'y domain', xanchor = 'left', yanchor = 'bottom', showarrow = False)
 
+            st.plotly_chart(fig)
 
-if type_of_plot=='Persistence norm' :
-    fig=go.Figure()
-    fig.add_trace(go.Scatter(x=stocks_tda.avg_PSD.index,y=stocks_tda.persistence_norms.iloc[:,0]))
-    fig.update_layout(title='{}'.format(type_of_plot))
-    fig.update_traces(mode="markers+lines", hovertemplate=None)
-    fig.update_xaxes(title_text='Date')
-    fig.update_yaxes(title_text='{}'.format(type_of_plot))
-    for crisis in dict_of_crashes :
-        if start_date <= dict_of_crashes[crisis] and dict_of_crashes[crisis] <= end_date :
-            #st.write('The {} crisis happened during the period you are looking at'.format(crisis))
-            fig.add_vline(x=dict_of_crashes[crisis].timestamp()*1000 ,line_dash='dash', line_color = 'green')
-            fig.add_annotation(x=dict_of_crashes[crisis].timestamp()*1000, y=0.85, text = crisis, textangle = -30, yref = 'y domain', xanchor = 'left', yanchor = 'bottom', showarrow = False)
+        if type_of_plot == 'Average variance' :
+            fig=go.Figure()
+            fig.add_trace(go.Scatter(x=stocks_tda.avg_PSD.index,y=stocks_tda.norms_var.iloc[:,0]))
+            fig.update_layout(title='{}'.format(type_of_plot))
+            fig.update_traces(mode="markers+lines", hovertemplate=None)
+            fig.update_xaxes(title_text='Date')
+            fig.update_yaxes(title_text='{}'.format(type_of_plot))
+            for crisis in dict_of_crashes :
+                if start_date <= dict_of_crashes[crisis] and dict_of_crashes[crisis] <= end_date :
+                    #st.write('The {} crisis happened during the period you are looking at'.format(crisis))
+                    fig.add_vline(x=dict_of_crashes[crisis].timestamp()*1000 ,line_dash='dash', line_color = 'green')
+                    fig.add_annotation(x=dict_of_crashes[crisis].timestamp()*1000, y=0.85, text = crisis, textangle = -30, yref = 'y domain', xanchor = 'left', yanchor = 'bottom', showarrow = False)
 
-    st.plotly_chart(fig)
-
-if type_of_plot=='Average Power Spectral density':
-    fig=go.Figure()
-    fig.add_trace(go.Scatter(x=stocks_tda.avg_PSD.index,y=stocks_tda.avg_PSD.iloc[:,0]))
-    fig.update_layout(title='{}'.format(type_of_plot))
-    fig.update_traces(mode="markers+lines", hovertemplate=None)
-    fig.update_xaxes(title_text='Date')
-    fig.update_yaxes(title_text='{}'.format(type_of_plot))
-    for crisis in dict_of_crashes :
-        if start_date <= dict_of_crashes[crisis] and dict_of_crashes[crisis] <= end_date :
-            #st.write('The {} crisis happened during the period you are looking at'.format(crisis))
-            fig.add_vline(x=dict_of_crashes[crisis].timestamp()*1000 ,line_dash='dash', line_color = 'green')
-            fig.add_annotation(x=dict_of_crashes[crisis].timestamp()*1000, y=0.85, text = crisis, textangle = -30, yref = 'y domain', xanchor = 'left', yanchor = 'bottom', showarrow = False)
-
-    st.plotly_chart(fig)
-
-if type_of_plot == 'Average variance' :
-    fig=go.Figure()
-    fig.add_trace(go.Scatter(x=stocks_tda.avg_PSD.index,y=stocks_tda.norms_var.iloc[:,0]))
-    fig.update_layout(title='{}'.format(type_of_plot))
-    fig.update_traces(mode="markers+lines", hovertemplate=None)
-    fig.update_xaxes(title_text='Date')
-    fig.update_yaxes(title_text='{}'.format(type_of_plot))
-    for crisis in dict_of_crashes :
-        if start_date <= dict_of_crashes[crisis] and dict_of_crashes[crisis] <= end_date :
-            #st.write('The {} crisis happened during the period you are looking at'.format(crisis))
-            fig.add_vline(x=dict_of_crashes[crisis].timestamp()*1000 ,line_dash='dash', line_color = 'green')
-            fig.add_annotation(x=dict_of_crashes[crisis].timestamp()*1000, y=0.85, text = crisis, textangle = -30, yref = 'y domain', xanchor = 'left', yanchor = 'bottom', showarrow = False)
-
-    st.plotly_chart(fig)
+            st.plotly_chart(fig)
